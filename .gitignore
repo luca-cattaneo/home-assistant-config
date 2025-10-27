@@ -1,0 +1,11 @@
+home-assistant_v2.db*
+*.db
+home-assistant.log.*
+home-assistant.log
+.storage/auth
+zigbee2mqtt/
+www/
+custom_components
+secrets.yaml
+.storage/
+blueprints/

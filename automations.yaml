@@ -1,0 +1,850 @@
+# At startup initialize temperature command from HVAC
+- id: extend_pac_temperature_set_default_value
+  alias: extend_pac_temperature_set_default_value
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/+/+
+  actions:
+    - variables:
+        floor: "{{ trigger.topic.split('/')[2] }}"
+        room: "{{ trigger.topic.split('/')[3] }}"
+        set_heat_from_device: "{{ (trigger.payload | from_json).get('occupied_heating_setpoint', None) | float }}"
+        set_cool_from_device: "{{ (trigger.payload | from_json).get('occupied_cooling_setpoint', None) | float }}"
+        set_heat: "{{ states('sensor.temperature_set_pac_grande_chambre_heat') | float(0) | round(1) }}"
+        set_cool: "{{ states('sensor.temperature_set_pac_grande_chambre_cool') | float(0) | round(1) }}"
+    - if:
+        - condition: template
+          value_template: "{{ set_heat <= 0 }}"
+      then:
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room}}/temperature/heat/set
+            payload: "{{ set_heat_from_device }}"
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room}}/temperature/heat/set/hvac_interface
+            payload: "{{ set_heat_from_device }}"
+    - if:
+        - condition: template
+          value_template: "{{ set_cool <= 0 }}"
+      then:
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room}}/temperature/cool/set
+            payload: "{{ set_cool_from_device }}"
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room}}/temperature/cool/set/hvac_interface
+            payload: "{{ set_cool_from_device }}"
+
+# On set temperature command send it to HVAC interface
+- id: extend_pac_temperature_set_hvac_interface
+  alias: extend_pac_temperature_set_hvac_interface
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/+/+/temperature/+/set
+  actions:
+    - variables:
+        floor: "{{ trigger.topic.split('/')[2] }}"
+        room: "{{ trigger.topic.split('/')[3] }}"
+        type: "{{ trigger.topic.split('/')[5] }}"
+        value: "{{ trigger.payload | float(0) }}"
+        previous_value: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_' ~ type) | float }}"
+    - if:
+        - condition: template
+          value_template: "{{ value != previous_value }}"
+      then:
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/{{ type }}/set/hvac_interface
+            payload: "{{ value }}"
+
+# on set temperature command heat calculate correction and send it to HVAC
+- id: extend_pac_temperature_set_correction_on_set_temp_heat
+  alias: extend_pac_temperature_set_correction_on_set_temp_heat
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/+/+/temperature/heat/set
+  actions:
+    - variables:
+        floor: "{{ trigger.topic.split('/')[2] }}"
+        room: "{{ trigger.topic.split('/')[3] }}"
+        set_value: "{{ trigger.payload | float(0) }}"
+        ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
+        hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
+        hvac_mode: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'system_mode') }}"
+        diff: "{{ hvac_temp - ext_temp }}"
+        set_device: "{{ ((set_value + diff) * 2) | round(0) / 2 }}" # rounded to the closest 0.5
+    - if:
+        - condition: template
+          value_template: "{{
+            hvac_mode != 'off' and
+            hvac_mode != 'cool' and
+            diff >= -5 and diff <= 5 and
+            ext_temp > 0 and
+            hvac_temp > 0
+            }}"
+      then:
+        - if:
+            - condition: template
+              value_template: "{{ set_device >= 16 and set_device <= 30  }}"
+          then:
+            - action: mqtt.publish
+              data:
+                topic: zigbee2mqtt/pac/{{ floor }}/{{ room }}/set/occupied_heating_setpoint
+                payload: "{{ set_device }}"
+            - action: mqtt.publish
+              data:
+                topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
+                payload: "{{ diff }}"
+
+# on set temperature command cool calculate correction and send it to HVAC
+- id: extend_pac_temperature_set_correction_on_set_temp_cool
+  alias: extend_pac_temperature_set_correction_on_set_temp_cool
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/+/+/temperature/cool/set
+  actions:
+    - variables:
+        floor: "{{ trigger.topic.split('/')[2] }}"
+        room: "{{ trigger.topic.split('/')[3] }}"
+        set_value: "{{ trigger.payload | float(0) }}"
+        ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
+        hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
+        hvac_mode: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'system_mode') }}"
+        diff: "{{ hvac_temp - ext_temp }}"
+        set_device: "{{ ((set_value + diff) * 2) | round(0) / 2 }}" # rounded to the closest 0.5
+    - if:
+        - condition: template
+          value_template: "{{
+            hvac_mode != 'off' and
+            hvac_mode != 'heat' and
+            diff >= -5 and diff <= 5 and
+            ext_temp > 0 and
+            hvac_temp > 0
+            }}"
+      then:
+        - if:
+            - condition: template
+              value_template: "{{ set_device >= 16 and set_device <= 30  }}"
+          then:
+            - action: mqtt.publish
+              data:
+                topic: zigbee2mqtt/pac/{{ floor }}/{{ room }}/set/occupied_cooling_setpoint
+                payload: "{{ set_device }}"
+            - action: mqtt.publish
+              data:
+                topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
+                payload: "{{ diff }}"
+
+# on temperature measured change calculate command correction and send it to HVAC
+- id: extend_pac_temperature_set_correction_on_temp_change
+  alias: extend_pac_temperature_set_correction_on_temp_change
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/sensor/+/+
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/+/+
+  actions:
+    - variables:
+        floor: "{{ trigger.topic.split('/')[2] }}"
+        room: "{{ trigger.topic.split('/')[3] }}"
+        ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
+        hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
+        hvac_mode: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'system_mode') }}"
+        diff: "{{ hvac_temp - ext_temp }}"
+        set_heat: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_heat') | float(0)}}"
+        set_cool: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_cool') | float(0)}}"
+        set_heat_device_previous: "{{ states('sensor.temperature_real_pac_' ~ room ~ '_heat') | float(0)}}"
+        set_cool_device_previous: "{{ states('sensor.temperature_real_pac_' ~ room ~ '_cool') | float(0)}}"
+        set_heat_device: "{{ ((set_heat + diff) * 2) | round(0) / 2 }}" # rounded to the closest 0.5
+        set_cool_device: "{{ ((set_cool + diff) * 2) | round(0) / 2 }}" # rounded to the closest 0.5
+    - if:
+        - condition: template
+          value_template: "{{
+            hvac_mode != 'off' and
+            diff >= -5 and diff <= 5 and
+            ext_temp > 0 and
+            hvac_temp > 0
+            }}"
+      then:
+        - if:
+            - condition: template
+              value_template: "{{
+                hvac_mode != 'cool' and
+                set_heat_device >= 16 and
+                set_heat_device <= 30 and
+                (set_heat_device_previous | float(0) - set_heat_device | float(0)) | abs > 0.5
+                }}"
+          then:
+            - action: mqtt.publish
+              data:
+                topic: zigbee2mqtt/pac/{{ floor }}/{{ room }}/set/occupied_heating_setpoint
+                payload: "{{ set_heat_device }}"
+        - if:
+            - condition: template
+              value_template: "{{
+                hvac_mode != 'heat' and
+                set_cool_device >= 16 and
+                set_cool_device <= 30 and
+                (set_cool_device_previous | float(0) - set_cool_device | float(0)) | abs > 0.5
+                }}"
+          then:
+            - action: mqtt.publish
+              data:
+                topic: zigbee2mqtt/pac/{{ floor }}/{{ room }}/set/occupied_cooling_setpoint
+                payload: "{{ set_cool_device }}"
+        - action: mqtt.publish
+          data:
+            topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
+            payload: "{{ diff }}"
+  trace:
+    stored_traces: 100000
+
+# Extend fan mode commands to fit into HA interface
+- id: extend_pac_fan_mode
+  alias: extend_pac_fan_mode
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/+/+
+  actions:
+    - action: mqtt.publish
+      data:
+        topic:
+          homeassistant/climate/{{ trigger.topic.split('/')[2]~'/'~trigger.topic.split('/')[3]
+          }}/extended_fan
+        payload:
+          "{% if trigger.payload_json.swing_mode == 'on' %} \n  swing\n{% else
+          %} \n  {{trigger.payload_json.ac_louver_position}}\n{% endif %}"
+- id: extend_pac_fan_mode_set
+  alias: extend_pac_fan_mode_set
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/+/+/extended_fan/set
+  actions:
+    - if:
+        - condition: template
+          value_template: "{{trigger.payload == 'swing' }}"
+      then:
+        - action: mqtt.publish
+          data:
+            topic:
+              zigbee2mqtt/pac/{{ trigger.topic.split('/')[2]~'/'~trigger.topic.split('/')[3]
+              }}/set/swing_mode
+            payload: "on"
+        - action: mqtt.publish
+          data:
+            topic:
+              zigbee2mqtt/pac/{{ trigger.topic.split('/')[2]~'/'~trigger.topic.split('/')[3]
+              }}/set/ac_louver_position
+            payload:
+      else:
+        - action: mqtt.publish
+          data:
+            topic:
+              zigbee2mqtt/pac/{{ trigger.topic.split('/')[2]~'/'~trigger.topic.split('/')[3]
+              }}/set/swing_mode
+            payload: "off"
+        - action: mqtt.publish
+          data:
+            topic:
+              zigbee2mqtt/pac/{{ trigger.topic.split('/')[2]~'/'~trigger.topic.split('/')[3]
+              }}/set/ac_louver_position
+            payload: "{{trigger.payload}}"
+- id: "1740859258763"
+  alias: A la maison
+  description: ""
+  use_blueprint:
+    path: homeassistant/notify_leaving_zone.yaml
+    input:
+      person_entity: person.ducatta
+      zone_entity: zone.home
+      notify_device: e9bb744acf59e90609e686ee8ed311f4
+- id: "1740861347308"
+  alias: soir_off_pac_bas
+  description: ""
+  triggers:
+    - trigger: time
+      at: "23:00:00"
+  conditions: []
+  actions:
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: set_hvac_mode
+      hvac_mode: "off"
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1740934865907"
+  alias: Close_all_shutters_button
+  description: ""
+  triggers:
+    - trigger: state
+      entity_id:
+        - input_button.close_all_shutters
+  conditions: []
+  actions:
+    - device_id: 29585a20f3fbfca630b76000634c3721
+      domain: cover
+      entity_id: 0c96a91d637786de9c3c4b8c62e2cd15
+      type: close
+    - device_id: d9e4760c6804abf6a242478997af1bc9
+      domain: cover
+      entity_id: c38762c4e1346aee1d8da7c557e4fc4d
+      type: close
+    - device_id: 1122cfe945db9a3e5d311d013cbd3838
+      domain: cover
+      entity_id: 10c7f235622ae3fc590fb3939f37b588
+      type: close
+    - device_id: a5a47a3e4fb130e79b276d2521246d65
+      domain: cover
+      entity_id: a9218af01b32e2c4452adab3335af7ae
+      type: close
+    - device_id: 127e03e673af450119261632ec6cf656
+      domain: cover
+      entity_id: 10b3280200df150e04e924b97603d33c
+      type: close
+    - device_id: 27f60140f2cdc08645bbb7c3f027bbfc
+      domain: cover
+      entity_id: 4e8919b11b6f79b5c3638560f1249238
+      type: close
+  mode: single
+- id: "1740944003530"
+  alias: Open all shutters
+  description: ""
+  triggers:
+    - trigger: state
+      entity_id:
+        - input_button.open_all_shutters
+  conditions: []
+  actions:
+    - device_id: 29585a20f3fbfca630b76000634c3721
+      domain: cover
+      entity_id: 0c96a91d637786de9c3c4b8c62e2cd15
+      type: open
+    - device_id: 1122cfe945db9a3e5d311d013cbd3838
+      domain: cover
+      entity_id: 10c7f235622ae3fc590fb3939f37b588
+      type: open
+    - device_id: d9e4760c6804abf6a242478997af1bc9
+      domain: cover
+      entity_id: c38762c4e1346aee1d8da7c557e4fc4d
+      type: open
+    - device_id: a5a47a3e4fb130e79b276d2521246d65
+      domain: cover
+      entity_id: a9218af01b32e2c4452adab3335af7ae
+      type: open
+    - device_id: 127e03e673af450119261632ec6cf656
+      domain: cover
+      entity_id: 10b3280200df150e04e924b97603d33c
+      type: open
+    - device_id: 27f60140f2cdc08645bbb7c3f027bbfc
+      domain: cover
+      entity_id: 4e8919b11b6f79b5c3638560f1249238
+      type: open
+  mode: single
+- id: "1741032961034"
+  alias: pacs set heat morning
+  description: ""
+  triggers:
+    - trigger: time
+      at: 06:00:00
+  conditions:
+    - condition: numeric_state
+      entity_id: weather.forecast_maison
+      attribute: temperature
+      below: 12
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+  actions:
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: set_hvac_mode
+      hvac_mode: heat
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: single
+- id: "1741035310684"
+  alias: pac haut comble heat soir
+  description: ""
+  triggers:
+    - trigger: time
+      at: "21:30:00"
+  conditions:
+    - condition: numeric_state
+      entity_id: weather.forecast_maison
+      attribute: temperature
+      below: 22
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+  actions:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: single
+- id: "1741035388412"
+  alias: pac haut off matin
+  description: ""
+  triggers:
+    - trigger: time
+      at: 07:30:00
+  conditions:
+    - type: is_on
+      condition: device
+      device_id: 62178c8378f6bbc2cccd05c306a652d7
+      entity_id: 787f6ffd4e6df63c2b4e0dd245f4df96
+      domain: binary_sensor
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+    - condition: state
+      entity_id: input_boolean.grassematt_mode
+      state: "off"
+  actions:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: set_hvac_mode
+      hvac_mode: "off"
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: set_hvac_mode
+      hvac_mode: "off"
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1741035544236"
+  alias: pac haut chambres heat soir
+  description: ""
+  triggers:
+    - trigger: time
+      at: "18:30:00"
+  conditions:
+    - condition: numeric_state
+      entity_id: weather.forecast_maison
+      attribute: temperature
+      below: 22
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+  actions:
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: set_hvac_mode
+      hvac_mode: heat
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: single
+- id: "1741117412708"
+  alias: Pac haut off matin we and holodays
+  description: ""
+  triggers:
+    - trigger: time
+      at: 09:00:00
+  conditions: []
+  actions:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: set_hvac_mode
+      hvac_mode: "off"
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: set_hvac_mode
+      hvac_mode: "off"
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1741202653246"
+  alias: Veilleuse on soir
+  description: ""
+  triggers:
+    - trigger: time
+      at: "18:30:00"
+  conditions:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+  actions:
+    - type: turn_on
+      device_id: 0b600b7b3f717e69d8fe0830a0dc0a59
+      entity_id: 294f1b4d79e883bf7512a1ce6a0fcc58
+      domain: switch
+  mode: single
+- id: "1741204900932"
+  alias: Veilleuse off matin
+  description: ""
+  triggers:
+    - trigger: time
+      at: 07:00:00
+  conditions: []
+  actions:
+    - type: turn_off
+      device_id: 0b600b7b3f717e69d8fe0830a0dc0a59
+      entity_id: 294f1b4d79e883bf7512a1ce6a0fcc58
+      domain: switch
+  mode: single
+- id: "1749370546626"
+  alias: PAC_SALON_COOL_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+  conditions:
+    - condition: device
+      device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: is_hvac_mode
+      hvac_mode: cool
+  actions:
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370614163"
+  alias: PAC_SALON_HEAT_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+  conditions:
+    - condition: device
+      device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: is_hvac_mode
+      hvac_mode: heat
+  actions:
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370725837"
+  alias: PAC_SALLE_MANGER_COOL_SET_OFF_IF_CONFLICT
+  description: ""
+  triggers:
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+  conditions:
+    - condition: device
+      device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: is_hvac_mode
+      hvac_mode: cool
+  actions:
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370758433"
+  alias: PAC_SALLE_MANGER_HEAT_SET_OFF_IF_CONFLICT
+  description: ""
+  triggers:
+    - device_id: df884e8b3a38d48928db48632ca261d5
+      domain: climate
+      entity_id: 06115d7e02e5b698aca583b5bc55c80c
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+  conditions:
+    - condition: device
+      device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: is_hvac_mode
+      hvac_mode: heat
+  actions:
+    - device_id: 67aaea08a8beea65f80059603f90be89
+      domain: climate
+      entity_id: 19db94019cf042f5f940fafebe0a8aef
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370855349"
+  alias: PAC_PETITE_CHAMBRE_HEAT_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+  conditions:
+    - condition: device
+      device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: is_hvac_mode
+      hvac_mode: heat
+  actions:
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370896277"
+  alias: PAC_PETITE_CHAMBRE_COOL_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+  conditions:
+    - condition: device
+      device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: is_hvac_mode
+      hvac_mode: cool
+  actions:
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749370992895"
+  alias: PAC_GRANDE_CHAMBRE_COOL_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+  conditions:
+    - condition: device
+      device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: is_hvac_mode
+      hvac_mode: cool
+  actions:
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749371023228"
+  alias: PAC_GRANDE_CHAMBRE_HEAT_SET_OFF_ON_CONFLICT
+  description: ""
+  triggers:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+  conditions:
+    - condition: device
+      device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: is_hvac_mode
+      hvac_mode: heat
+  actions:
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749371161071"
+  alias: PAC_COMBLES_SET_OFF_ON_CONFLICT_COOL
+  description: ""
+  triggers:
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: hvac_mode_changed
+      trigger: device
+      to: cool
+  conditions:
+    - condition: not
+      conditions:
+        - condition: device
+          device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+          domain: climate
+          entity_id: ca4a9c3089608882de700c2a6f011734
+          type: is_hvac_mode
+          hvac_mode: cool
+  actions:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1749371227980"
+  alias: PAC_COMBLES_SET_OFF_ON_CONFLICT_HEAT
+  description: ""
+  triggers:
+    - device_id: e8ceabf3c7728862a264a511a8f6f6cd
+      domain: climate
+      entity_id: eb64c5e3a2a7e357c26516c12aaaa427
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+    - device_id: 7f7757cb536520e3fa1df8a52d77e183
+      domain: climate
+      entity_id: 7d3aeab8a3d1df9509bb300ea9c2d87f
+      type: hvac_mode_changed
+      trigger: device
+      to: heat
+  conditions:
+    - condition: not
+      conditions:
+        - condition: device
+          device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+          domain: climate
+          entity_id: ca4a9c3089608882de700c2a6f011734
+          type: is_hvac_mode
+          hvac_mode: heat
+  actions:
+    - device_id: 7a35b24e16cd75c69531d6ef8c7a2d0c
+      domain: climate
+      entity_id: ca4a9c3089608882de700c2a6f011734
+      type: set_hvac_mode
+      hvac_mode: "off"
+  mode: single
+- id: "1757855102773"
+  alias: Switch buanderie prise 1 on others off
+  description: ""
+  triggers:
+    - type: turned_on
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 0d3a3b47731062d8403ee6e4f1295764
+      domain: switch
+      trigger: device
+  conditions: []
+  actions:
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 6f50c01337c8bc835de96d7e06f973c8
+      domain: switch
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 03938d40d551f0fab57a502e5829eb78
+      domain: switch
+  mode: single
+- id: "1757855845658"
+  alias: Switch buanderie on prise 2 on others off
+  description: ""
+  triggers:
+    - type: turned_on
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 6f50c01337c8bc835de96d7e06f973c8
+      domain: switch
+      trigger: device
+  conditions: []
+  actions:
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 0d3a3b47731062d8403ee6e4f1295764
+      domain: switch
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 03938d40d551f0fab57a502e5829eb78
+      domain: switch
+  mode: single
+- id: "1757856774418"
+  alias: Switch bouanderie on radiateurs on others off
+  description: ""
+  triggers:
+    - type: turned_on
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 03938d40d551f0fab57a502e5829eb78
+      domain: switch
+      trigger: device
+  conditions: []
+  actions:
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 6f50c01337c8bc835de96d7e06f973c8
+      domain: switch
+    - type: turn_off
+      device_id: a4ac1c53348f2bcd82d2a2c9bd59707a
+      entity_id: 0d3a3b47731062d8403ee6e4f1295764
+      domain: switch
+  mode: single
