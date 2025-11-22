@@ -1,0 +1,206 @@
+# ------------------ COMMON DEFINITIONS ------------------
+sensor_base: &sensor_base
+  unit_of_measurement: "°C"
+  value_template: "{{ value | float }}"
+
+climate_base: &climate_base
+  availability:
+    - topic: zigbee2mqtt/bridge/state
+      value_template: "{{ value_json.state }}"
+  fan_modes: [low, medium, high, auto]
+  preset_modes: [activity, boost, eco]
+  swing_modes:
+    - swing
+    - quarter_open
+    - half_open
+    - three_quarters_open
+    - fully_open
+  modes:
+    - "off"
+    - heat
+    - cool
+    - auto
+    - dry
+    - fan_only
+  max_temp: 30
+  min_temp: 16
+  current_temperature_template: "{{ value_json.local_temperature }}"
+  fan_mode_state_template: "{{ value_json.fan_mode }}"
+  preset_mode_value_template: "{{ value_json.preset }}"
+  mode_state_template: "{{ value_json.system_mode }}"
+
+mqtt:
+  # PAC grande chambre -------------------------------------------
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_grande_chambre_temperature_set_heat
+      name: "Temperature set pac grande chambre heat"
+      state_topic: "homeassistant/climate/haut/grande_chambre/temperature/heat/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_grande_chambre_temperature_set_cool
+      name: "Temperature set pac grande chambre cool"
+      state_topic: "homeassistant/climate/haut/grande_chambre/temperature/cool/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_grande_chambre_temperature_device_heat
+      name: "Temperature real pac grande chambre heat"
+      state_topic: "zigbee2mqtt/pac/haut/grande_chambre/set/occupied_heating_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_grande_chambre_temperature_device_cool
+      name: "Temperature real pac grande chambre cool"
+      state_topic: "zigbee2mqtt/pac/haut/grande_chambre/set/occupied_cooling_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_grande_chambre_temperature_diff
+      name: "Temperature diff pac grande chambre"
+      state_topic: "homeassistant/climate/haut/grande_chambre/temperature/diff/set"
+
+  - climate:
+      <<: *climate_base
+      unique_id: pac_grande_chambre
+      name: pac_grande_chambre
+      device:
+        identifiers: [zigbee2mqtt_0x5cc7c1fffeb33fd1]
+        name: pac/haut/grande_chambre
+      current_temperature_topic: zigbee2mqtt/pac/haut/grande_chambre
+      fan_mode_command_topic: zigbee2mqtt/pac/haut/grande_chambre/set/fan_mode
+      fan_mode_state_topic: zigbee2mqtt/pac/haut/grande_chambre
+      preset_mode_command_topic: zigbee2mqtt/pac/haut/grande_chambre/set/preset
+      preset_mode_state_topic: zigbee2mqtt/pac/haut/grande_chambre
+      swing_mode_command_topic: homeassistant/climate/haut/grande_chambre/extended_fan/set
+      swing_mode_state_topic: homeassistant/climate/haut/grande_chambre/extended_fan
+      temperature_high_command_topic: homeassistant/climate/haut/grande_chambre/temperature/cool/set
+      temperature_low_command_topic: homeassistant/climate/haut/grande_chambre/temperature/heat/set
+      temperature_high_state_topic: "homeassistant/climate/haut/grande_chambre/temperature/cool/set/hvac_interface"
+      temperature_low_state_topic: "homeassistant/climate/haut/grande_chambre/temperature/heat/set/hvac_interface"
+      mode_command_topic: zigbee2mqtt/pac/haut/grande_chambre/set/system_mode
+      mode_state_topic: zigbee2mqtt/pac/haut/grande_chambre
+
+  # PAC petite chambre -------------------------------------------
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_petite_chambre_temperature_set_heat
+      name: "Temperature set pac petite chambre heat"
+      state_topic: "homeassistant/climate/haut/petite_chambre/temperature/heat/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_petite_chambre_temperature_set_cool
+      name: "Temperature set pac petite chambre cool"
+      state_topic: "homeassistant/climate/haut/petite_chambre/temperature/cool/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_petite_chambre_temperature_device_heat
+      name: "Temperature real pac petite chambre heat"
+      state_topic: "zigbee2mqtt/pac/haut/petite_chambre/set/occupied_heating_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_petite_chambre_temperature_device_cool
+      name: "Temperature real pac petite chambre cool"
+      state_topic: "zigbee2mqtt/pac/haut/petite_chambre/set/occupied_cooling_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_petite_chambre_temperature_diff
+      name: "Temperature diff pac petite chambre"
+      state_topic: "homeassistant/climate/haut/petite_chambre/temperature/diff/set"
+
+  - climate:
+      <<: *climate_base
+      unique_id: pac_petite_chambre
+      name: pac_petite_chambre
+      device:
+        identifiers: [zigbee2mqtt_0x5cc7c1fffeb330df]
+        name: pac/haut/petite_chambre
+      current_temperature_topic: zigbee2mqtt/pac/haut/petite_chambre
+      fan_mode_command_topic: zigbee2mqtt/pac/haut/petite_chambre/set/fan_mode
+      fan_mode_state_topic: zigbee2mqtt/pac/haut/petite_chambre
+      preset_mode_command_topic: zigbee2mqtt/pac/haut/petite_chambre/set/preset
+      preset_mode_state_topic: zigbee2mqtt/pac/haut/petite_chambre
+      swing_mode_command_topic: homeassistant/climate/haut/petite_chambre/extended_fan/set
+      swing_mode_state_topic: homeassistant/climate/haut/petite_chambre/extended_fan
+      temperature_high_command_topic: homeassistant/climate/haut/petite_chambre/temperature/cool/set
+      temperature_low_command_topic: homeassistant/climate/haut/petite_chambre/temperature/heat/set
+      temperature_high_state_topic: "homeassistant/climate/haut/petite_chambre/temperature/cool/set/hvac_interface"
+      temperature_low_state_topic: "homeassistant/climate/haut/petite_chambre/temperature/heat/set/hvac_interface"
+      mode_command_topic: zigbee2mqtt/pac/haut/petite_chambre/set/system_mode
+      mode_state_topic: zigbee2mqtt/pac/haut/petite_chambre
+
+  # PAC combles -------------------------------------------
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_combles_temperature_set_heat
+      name: "Temperature set pac combles heat"
+      state_topic: "homeassistant/climate/haut/combles/temperature/heat/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_combles_temperature_set_cool
+      name: "Temperature set pac combles cool"
+      state_topic: "homeassistant/climate/haut/combles/temperature/cool/set"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_combles_temperature_device_heat
+      name: "Temperature real pac combles heat"
+      state_topic: "zigbee2mqtt/pac/haut/combles/set/occupied_heating_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_combles_temperature_device_cool
+      name: "Temperature real pac combles cool"
+      state_topic: "zigbee2mqtt/pac/haut/combles/set/occupied_cooling_setpoint"
+
+  - sensor:
+      <<: *sensor_base
+      unique_id: pac_combles_temperature_diff
+      name: "Temperature diff pac combles"
+      state_topic: "homeassistant/climate/haut/combles/temperature/diff/set"
+
+  - climate:
+      <<: *climate_base
+      unique_id: pac_combles
+      name: pac_combles
+      device:
+        identifiers: [zigbee2mqtt_0x5cc7c1fffed9600c]
+        name: pac/haut/combles
+      current_temperature_topic: zigbee2mqtt/pac/haut/combles
+      fan_mode_command_topic: zigbee2mqtt/pac/haut/combles/set/fan_mode
+      fan_mode_state_topic: zigbee2mqtt/pac/haut/combles
+      preset_mode_command_topic: zigbee2mqtt/pac/haut/combles/set/preset
+      preset_mode_state_topic: zigbee2mqtt/pac/haut/combles
+      swing_mode_command_topic: homeassistant/climate/haut/combles/extended_fan/set
+      swing_mode_state_topic: homeassistant/climate/haut/combles/extended_fan
+      temperature_high_command_topic: homeassistant/climate/haut/combles/temperature/cool/set
+      temperature_low_command_topic: homeassistant/climate/haut/combles/temperature/heat/set
+      temperature_high_state_topic: "homeassistant/climate/haut/combles/temperature/cool/set/hvac_interface"
+      temperature_low_state_topic: "homeassistant/climate/haut/combles/temperature/heat/set/hvac_interface"
+      mode_command_topic: zigbee2mqtt/pac/haut/combles/set/system_mode
+      mode_state_topic: zigbee2mqtt/pac/haut/combles
+# --------------------------------------------------------------------------------------------------------------------------
+#  HOW TO DISCONNECT ADVANCED TEMPERATURE CORRECTION
+# --------------------------------------------------------------------------------------------------------------------------
+
+#temperature_high_command_topic: zigbee2mqtt/pac/haut/grande_chambre/set/occupied_cooling_setpoint
+#temperature_low_command_topic: zigbee2mqtt/pac/haut/grande_chambre/set/occupied_heating_setpoint
+
+#temperature_high_command_topic: homeassistant/climate/haut/grande_chambre/temperature/cool/set
+#temperature_low_command_topic: homeassistant/climate/haut/grande_chambre/temperature/heat/set
+
+#temperature_high_state_template: "{{ value_json.occupied_cooling_setpoint }}"
+#temperature_high_state_topic: zigbee2mqtt/pac/haut/grande_chambre
+#temperature_low_state_template: "{{ value_json.occupied_heating_setpoint }}"
+#temperature_low_state_topic: zigbee2mqtt/pac/haut/grande_chambre
+
+#temperature_high_state_topic: "homeassistant/climate/haut/grande_chambre/temperature/cool/set/hvac_interface"
+#temperature_low_state_topic: "homeassistant/climate/haut/grande_chambre/temperature/heat/set/hvac_interface"
+# --------------------------------------------------------------------------------------------------------------------------
+
