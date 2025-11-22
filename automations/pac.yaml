@@ -1,13 +1,7 @@
 # At startup initialize temperature command from HVAC
-- id: extend_pac_temperature_set_default_value
-  alias: extend_pac_temperature_set_default_value
-  triggers:
-    - trigger: mqtt
-      topic: zigbee2mqtt/pac/+/+
+- &pac_temperature_init
   actions:
     - variables:
-        floor: "{{ trigger.topic.split('/')[2] }}"
-        room: "{{ trigger.topic.split('/')[3] }}"
         set_heat_from_device: "{{ (trigger.payload | from_json).get('occupied_heating_setpoint', None) | float }}"
         set_cool_from_device: "{{ (trigger.payload | from_json).get('occupied_cooling_setpoint', None) | float }}"
         set_heat: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_heat') | float(0) | round(1) }}"
@@ -37,16 +31,29 @@
             topic: homeassistant/climate/{{ floor }}/{{ room}}/temperature/cool/set/hvac_interface
             payload: "{{ set_cool_from_device }}"
 
-# On set temperature command send it to HVAC interface
-- id: extend_pac_temperature_set_hvac_interface
-  alias: extend_pac_temperature_set_hvac_interface
+- id: pac_temperature_init_grande_chambre
+  alias: pac_temperature_init_grande_chambre
   triggers:
     - trigger: mqtt
-      topic: homeassistant/climate/+/+/temperature/+/set
+      topic: zigbee2mqtt/pac/haut/grande_chambre
+  variables:
+    floor: "haut"
+    room: "grande_chambre"
+  <<: *pac_temperature_init
+- id: pac_temperature_init_petite_chambre
+  alias: pac_temperature_init_petite_chambre
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/haut/petite_chambre
+  variables:
+    floor: "haut"
+    room: "petite_chambre"
+  <<: *pac_temperature_init
+
+# On set temperature command send it to HVAC interface
+- &pac_temperature_set_interface
   actions:
     - variables:
-        floor: "{{ trigger.topic.split('/')[2] }}"
-        room: "{{ trigger.topic.split('/')[3] }}"
         type: "{{ trigger.topic.split('/')[5] }}"
         value: "{{ trigger.payload | float(0) }}"
         previous_value: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_' ~ type) | float }}"
@@ -59,16 +66,29 @@
             topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/{{ type }}/set/hvac_interface
             payload: "{{ value }}"
 
-# on set temperature command heat calculate correction and send it to HVAC
-- id: extend_pac_temperature_set_correction_on_set_temp_heat
-  alias: extend_pac_temperature_set_correction_on_set_temp_heat
+- id: pac_temperature_set_interface_grande_chambre
+  alias: pac_temperature_set_interface_grande_chambre
   triggers:
     - trigger: mqtt
-      topic: homeassistant/climate/+/+/temperature/heat/set
+      topic: homeassistant/climate/haut/grande_chambre/temperature/+/set
+  variables:
+    floor: "haut"
+    room: "grande_chambre"
+  <<: *pac_temperature_set_interface
+- id: pac_temperature_set_interface_petite_chambre
+  alias: pac_temperature_set_interface_petite_chambre
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/haut/petite_chambre/temperature/+/set
+  variables:
+    floor: "haut"
+    room: "petite_chambre"
+  <<: *pac_temperature_set_interface
+
+# on set temperature command heat calculate correction and send it to HVAC
+- &pac_set_heat_correction
   actions:
     - variables:
-        floor: "{{ trigger.topic.split('/')[2] }}"
-        room: "{{ trigger.topic.split('/')[3] }}"
         set_value: "{{ trigger.payload | float(0) }}"
         ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
         hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
@@ -98,16 +118,29 @@
                 topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
                 payload: "{{ diff }}"
 
-# on set temperature command cool calculate correction and send it to HVAC
-- id: extend_pac_temperature_set_correction_on_set_temp_cool
-  alias: extend_pac_temperature_set_correction_on_set_temp_cool
+- id: pac_set_heat_correction_grande_chambre
+  alias: pac_set_heat_correction_grande_chambre
   triggers:
     - trigger: mqtt
-      topic: homeassistant/climate/+/+/temperature/cool/set
+      topic: homeassistant/climate/haut/grande_chambre/temperature/heat/set
+  variables:
+    floor: "haut"
+    room: "grande_chambre"
+  <<: *pac_set_heat_correction
+- id: pac_set_heat_correction_petite_chambre
+  alias: pac_set_heat_correction_petite_chambre
+  triggers:
+    - trigger: mqtt
+      topic: homeassistant/climate/haut/petite_chambre/temperature/heat/set
+  variables:
+    floor: "haut"
+    room: "petite_chambre"
+  <<: *pac_set_heat_correction
+
+# on set temperature command cool calculate correction and send it to HVAC
+- &pac_set_cool_correction
   actions:
     - variables:
-        floor: "{{ trigger.topic.split('/')[2] }}"
-        room: "{{ trigger.topic.split('/')[3] }}"
         set_value: "{{ trigger.payload | float(0) }}"
         ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
         hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
@@ -137,18 +170,29 @@
                 topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
                 payload: "{{ diff }}"
 
-# on temperature measured change calculate command correction and send it to HVAC
-- id: extend_pac_temperature_set_correction_on_temp_change
-  alias: extend_pac_temperature_set_correction_on_temp_change
+- id: pac_set_cool_correction_grande_chambre
+  alias: pac_set_cool_correction_grande_chambre
   triggers:
     - trigger: mqtt
-      topic: zigbee2mqtt/sensor/+/+
+      topic: homeassistant/climate/haut/grande_chambre/temperature/cool/set
+  variables:
+    floor: "haut"
+    room: "grande_chambre"
+  <<: *pac_set_cool_correction
+- id: pac_set_cool_correction_petite_chambre
+  alias: pac_set_cool_correction_petite_chambre
+  triggers:
     - trigger: mqtt
-      topic: zigbee2mqtt/pac/+/+
+      topic: homeassistant/climate/haut/petite_chambre/temperature/cool/set
+  variables:
+    floor: "haut"
+    room: "petite_chambre"
+  <<: *pac_set_cool_correction
+
+# on temperature measured change calculate command correction and send it to HVAC
+- &pac_temperature_change_correction
   actions:
     - variables:
-        floor: "{{ trigger.topic.split('/')[2] }}"
-        room: "{{ trigger.topic.split('/')[3] }}"
         ext_temp: "{{ states('sensor.temperature_' ~ room) | float(0) }}"
         hvac_temp: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'current_temperature') | float(0) }}"
         hvac_mode: "{{ state_attr('climate.pac_' ~ room ~ '_pac_' ~ room,'system_mode') }}"
@@ -198,8 +242,29 @@
           data:
             topic: homeassistant/climate/{{ floor }}/{{ room }}/temperature/diff/set
             payload: "{{ diff }}"
-  trace:
-    stored_traces: 100000
+
+- id: pac_temperature_change_correction_grande_chambre
+  alias: pac_temperature_change_correction_grande_chambre
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/sensor/haut/grande_chambre
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/haut/grande_chambre
+  variables:
+    floor: "haut"
+    room: "grande_chambre"
+  <<: *pac_temperature_change_correction
+- id: pac_temperature_change_correction_petite_chambre
+  alias: pac_temperature_change_correction_petite_chambre
+  triggers:
+    - trigger: mqtt
+      topic: zigbee2mqtt/sensor/haut/petite_chambre
+    - trigger: mqtt
+      topic: zigbee2mqtt/pac/haut/petite_chambre
+  variables:
+    floor: "haut"
+    room: "petite_chambre"
+  <<: *pac_temperature_change_correction
 
 # Extend fan mode commands to fit into HA interface
 - id: extend_pac_fan_mode
