@@ -179,12 +179,20 @@ mqtt:
       preset_mode_state_topic: zigbee2mqtt/pac/haut/combles
       swing_mode_command_topic: homeassistant/climate/haut/combles/extended_fan/set
       swing_mode_state_topic: homeassistant/climate/haut/combles/extended_fan
-      temperature_high_command_topic: homeassistant/climate/haut/combles/temperature/cool/set
-      temperature_low_command_topic: homeassistant/climate/haut/combles/temperature/heat/set
-      temperature_high_state_topic: "homeassistant/climate/haut/combles/temperature/cool/set/hvac_interface"
-      temperature_low_state_topic: "homeassistant/climate/haut/combles/temperature/heat/set/hvac_interface"
+      #temperature_high_command_topic: homeassistant/climate/haut/combles/temperature/cool/set
+      #temperature_low_command_topic: homeassistant/climate/haut/combles/temperature/heat/set
+      #temperature_high_state_topic: "homeassistant/climate/haut/combles/temperature/cool/set/hvac_interface"
+      #temperature_low_state_topic: "homeassistant/climate/haut/combles/temperature/heat/set/hvac_interface"
       mode_command_topic: zigbee2mqtt/pac/haut/combles/set/system_mode
       mode_state_topic: zigbee2mqtt/pac/haut/combles
+
+      temperature_high_command_topic: zigbee2mqtt/pac/haut/combles/set/occupied_cooling_setpoint
+      temperature_low_command_topic: zigbee2mqtt/pac/haut/combles/set/occupied_heating_setpoint
+
+      temperature_high_state_template: "{{ value_json.occupied_cooling_setpoint }}"
+      temperature_high_state_topic: zigbee2mqtt/pac/haut/combles
+      temperature_low_state_template: "{{ value_json.occupied_heating_setpoint }}"
+      temperature_low_state_topic: zigbee2mqtt/pac/haut/combles
 # --------------------------------------------------------------------------------------------------------------------------
 #  HOW TO DISCONNECT ADVANCED TEMPERATURE CORRECTION
 # --------------------------------------------------------------------------------------------------------------------------
