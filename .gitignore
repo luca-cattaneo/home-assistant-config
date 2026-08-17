@@ -9,3 +9,5 @@ custom_components
 secrets.yaml
 .storage/
 blueprints/
+.ha_run.lock
+.cache/
