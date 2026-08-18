@@ -56,7 +56,7 @@
     - variables:
         type: "{{ trigger.topic.split('/')[5] }}"
         value: "{{ trigger.payload | float(0) }}"
-        previous_value: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_' ~ type) | float }}"
+        previous_value: "{{ states('sensor.temperature_set_pac_' ~ room ~ '_' ~ type) | float(0) }}"
     - if:
         - condition: template
           value_template: "{{ value != previous_value }}"
@@ -70,7 +70,9 @@
   alias: pac_temperature_set_interface_grande_chambre
   triggers:
     - trigger: mqtt
-      topic: homeassistant/climate/haut/grande_chambre/temperature/+/set
+      topic: homeassistant/climate/haut/grande_chambre/temperature/heat/set
+    - trigger: mqtt
+      topic: homeassistant/climate/haut/grande_chambre/temperature/cool/set
   variables:
     floor: "haut"
     room: "grande_chambre"
@@ -79,7 +81,9 @@
   alias: pac_temperature_set_interface_petite_chambre
   triggers:
     - trigger: mqtt
-      topic: homeassistant/climate/haut/petite_chambre/temperature/+/set
+      topic: homeassistant/climate/haut/petite_chambre/temperature/heat/set
+    - trigger: mqtt
+      topic: homeassistant/climate/haut/petite_chambre/temperature/cool/set
   variables:
     floor: "haut"
     room: "petite_chambre"
