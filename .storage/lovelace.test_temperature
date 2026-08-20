@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.test_temperature",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Home",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Grande chambre",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "sensor.temperature_real_pac_grande_chambre_cool"
+                    },
+                    {
+                      "entity": "sensor.temperature_real_pac_grande_chambre_heat"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "sensor.temperature_diff_pac_grande_chambre"
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "climate.pac_grande_chambre_pac_grande_chambre"
+                    }
+                  ]
+                },
+                {
+                  "title": "History",
+                  "type": "history-graph",
+                  "hours_to_show": 12,
+                  "entities": [
+                    "sensor.temperature_set_pac_grande_chambre_heat",
+                    "sensor.temperature_real_pac_grande_chambre_heat",
+                    "sensor.temperature_grande_chambre",
+                    "climate.pac_grande_chambre_pac_grande_chambre"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Petite chambre",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "sensor.temperature_real_pac_petite_chambre_cool"
+                    },
+                    {
+                      "entity": "sensor.temperature_real_pac_petite_chambre_heat"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "sensor.temperature_diff_pac_petite_chambre"
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "climate.pac_petite_chambre_pac_petite_chambre"
+                    }
+                  ]
+                },
+                {
+                  "title": "History",
+                  "type": "history-graph",
+                  "hours_to_show": 12,
+                  "entities": [
+                    "sensor.temperature_set_pac_petite_chambre_heat",
+                    "sensor.temperature_real_pac_petite_chambre_heat",
+                    "sensor.temperature_petite_chambre",
+                    "climate.pac_petite_chambre_pac_petite_chambre"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Combles",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "sensor.temperature_real_pac_combles_cool"
+                    },
+                    {
+                      "entity": "sensor.temperature_real_pac_combles_heat"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "sensor.temperature_diff_pac_combles"
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "climate.pac_combles_pac_combles"
+                    }
+                  ]
+                },
+                {
+                  "title": "History",
+                  "type": "history-graph",
+                  "hours_to_show": 12,
+                  "entities": [
+                    "sensor.temperature_set_pac_combles_heat",
+                    "sensor.temperature_real_pac_combles_heat",
+                    "sensor.temperature_combles",
+                    "climate.pac_combles_pac_combles"
+                  ]
+                }
+              ]
+            }
+          ],
+          "cards": []
+        }
+      ]
+    }
+  }
+}

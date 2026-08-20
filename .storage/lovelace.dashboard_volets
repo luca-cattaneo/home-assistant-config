@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_volets",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Home",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "show_name": false,
+                  "show_icon": true,
+                  "type": "button",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "entity": "input_button.open_all_shutters",
+                  "grid_options": {
+                    "columns": 6,
+                    "rows": 1
+                  }
+                },
+                {
+                  "show_name": false,
+                  "show_icon": true,
+                  "type": "button",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "entity": "input_button.close_all_shutters",
+                  "grid_options": {
+                    "columns": 6,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "heading",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "cover.smart_roller_shutter_24042625477693700804c4e7ae03aca4_shutter",
+                    "cover.smart_roller_shutter_24042629712496700804c4e7ae03b7de_shutter",
+                    "cover.cuisine",
+                    "cover.smart_roller_shutter_24092361726923700802c4e7ae0bd36d_shutter",
+                    "cover.grande_chambre",
+                    "cover.petite_chambre"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

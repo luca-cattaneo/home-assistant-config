@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_test",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Home",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:mushroom-climate-card",
+                  "entity": "climate.pac_salon_pac_salon",
+                  "name": "Pac salon",
+                  "icon": "mdi:sofa-single",
+                  "show_temperature_control": true,
+                  "collapsible_controls": true,
+                  "tap_action": {
+                    "action": "more-info"
+                  },
+                  "hold_action": {
+                    "action": "toggle"
+                  },
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "custom:mushroom-climate-card",
+                  "entity": "climate.pac_salle_manger_pac_salle_manger",
+                  "name": "Pac salle à manger",
+                  "icon": "mdi:table-furniture",
+                  "show_temperature_control": true,
+                  "collapsible_controls": true,
+                  "tap_action": {
+                    "action": "more-info"
+                  },
+                  "hold_action": {
+                    "action": "toggle"
+                  },
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "custom:mushroom-climate-card",
+                  "entity": "climate.pac_grande_chambre_pac_grande_chambre",
+                  "name": "Pac grande chambre",
+                  "icon": "mdi:bed-king",
+                  "fill_container": true,
+                  "show_temperature_control": true,
+                  "collapsible_controls": true,
+                  "tap_action": {
+                    "action": "more-info"
+                  },
+                  "hold_action": {
+                    "action": "toggle"
+                  },
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "custom:mushroom-climate-card",
+                  "entity": "climate.pac_petite_chambre_pac_petite_chambre",
+                  "name": "Pac petite chambre",
+                  "icon": "mdi:bed",
+                  "show_temperature_control": true,
+                  "collapsible_controls": true,
+                  "tap_action": {
+                    "action": "more-info"
+                  },
+                  "hold_action": {
+                    "action": "toggle"
+                  },
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "custom:mushroom-climate-card",
+                  "entity": "climate.pac_combles_pac_combles",
+                  "name": "Pac combles",
+                  "icon": "mdi:home-roof",
+                  "show_temperature_control": true,
+                  "collapsible_controls": true,
+                  "tap_action": {
+                    "action": "more-info"
+                  },
+                  "hold_action": {
+                    "action": "toggle"
+                  },
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "switch.switch_buanderie_switch_1",
+                      "name": "Radiateur escalier bas",
+                      "icon": "mdi:stairs-down"
+                    },
+                    {
+                      "entity": "switch.wifi_smart_switch",
+                      "name": "Radiateur escalier haut",
+                      "icon": "mdi:stairs-up"
+                    },
+                    {
+                      "entity": "switch.wifi_smart_switch_2",
+                      "name": "Radiateur sdb",
+                      "icon": "mdi:shower"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "light.plafonnier_petite_chambre"
+                  ]
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.temperature_grande_chambre",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.0xf4b3b1fffe52341f_humidity",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.temperature_petite_chambre",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "entity": "sensor.0xf4b3b1fffe524125_humidity",
+                  "graph": "line"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.temperature_salon",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.0x385cfbfffed32253_humidity",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sensor_haut_sdb_temperature",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sensor_haut_sdb_humidity",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sensor_bas_escalier_temperature",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sensor_bas_escalier_humidity",
+                  "detail": 1
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "detail": 1,
+                  "entity": "sensor.sensor_haut_combles_temperature"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "detail": 1,
+                  "entity": "sensor.sensor_haut_combles_humidity"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

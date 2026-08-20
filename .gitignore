@@ -7,7 +7,8 @@ zigbee2mqtt/
 www/
 custom_components
 secrets.yaml
-.storage/
+.storage/*
+!.storage/lovelace*
 blueprints/
 .ha_run.lock
 .cache/

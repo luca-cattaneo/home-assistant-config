@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_resources",
+  "data": {
+    "items": [
+      {
+        "id": "3360c0f614a047408c9895925e3d6177",
+        "url": "local/tuto-card-exemple.js",
+        "type": "module"
+      },
+      {
+        "id": "27509e9f459a431faa0b046614bab8e1",
+        "url": "/hacsfiles/lovelace-mushroom/mushroom.js?hacstag=444350375522",
+        "type": "module"
+      },
+      {
+        "id": "1187c6cdcdd4410fb4e0ff1529e852de",
+        "url": "/hacsfiles/scheduler-card/scheduler-card.js?hacstag=2862701574019",
+        "type": "module"
+      }
+    ]
+  }
+}

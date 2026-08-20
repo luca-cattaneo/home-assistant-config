@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_dashboards",
+  "data": {
+    "items": [
+      {
+        "id": "dashboard_test",
+        "show_in_sidebar": true,
+        "icon": "mdi:radiator",
+        "title": "Chauffage",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "dashboard-test"
+      },
+      {
+        "id": "dashboard_volets",
+        "show_in_sidebar": true,
+        "icon": "mdi:window-shutter-settings",
+        "title": "Volets",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "dashboard-volets"
+      },
+      {
+        "id": "test_temperature",
+        "show_in_sidebar": true,
+        "icon": "mdi:thermometer-alert",
+        "title": "Test temperature",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "test-temperature"
+      },
+      {
+        "id": "schedule_radiateurs",
+        "show_in_sidebar": true,
+        "icon": "mdi:weather-cloudy-clock",
+        "title": "Schedules",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "schedule-radiateurs"
+      }
+    ]
+  }
+}
