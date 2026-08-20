@@ -11,3 +11,4 @@ secrets.yaml
 blueprints/
 .ha_run.lock
 .cache/
+.ssh/
