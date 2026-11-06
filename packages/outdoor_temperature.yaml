@@ -1,0 +1,11 @@
+# Outdoor temperature from the Met.no weather integration.
+# Added for Versatile Thermostat (requires an outdoor temp sensor entity;
+# unused in regulation while expert k_ext=0 — see PAC-CLIMATE.md).
+template:
+  - sensor:
+      - name: "Temperature exterieur"
+        unique_id: temperature_exterieur
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        state: "{{ state_attr('weather.forecast_maison', 'temperature') }}"

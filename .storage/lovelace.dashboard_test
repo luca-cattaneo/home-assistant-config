@@ -13,21 +13,55 @@
               "cards": [
                 {
                   "type": "custom:mushroom-climate-card",
-                  "entity": "climate.pac_salon_pac_salon",
-                  "name": "Pac salon",
+                  "entity": "climate.vtherm_salon",
+                  "name": "Salon",
                   "icon": "mdi:sofa-single",
+                  "hvac_modes": [
+                    "heat",
+                    "cool",
+                    "off"
+                  ],
                   "show_temperature_control": true,
-                  "collapsible_controls": true,
+                  "collapsible_controls": false,
                   "tap_action": {
                     "action": "more-info"
                   },
-                  "hold_action": {
-                    "action": "toggle"
-                  },
                   "grid_options": {
                     "columns": 12,
-                    "rows": 1
+                    "rows": 2
                   }
+                },
+                {
+                  "type": "horizontal-stack",
+                  "grid_options": {
+                    "columns": 12
+                  },
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "entity": "sensor.pac_bas_salon_local_temperature",
+                      "name": "Sonde PAC",
+                      "icon": "mdi:thermometer-lines",
+                      "layout": "vertical",
+                      "primary_info": "name",
+                      "secondary_info": "state",
+                      "tap_action": {
+                        "action": "more-info"
+                      }
+                    },
+                    {
+                      "type": "custom:mushroom-template-card",
+                      "entity": "climate.pac_salon_pac_salon",
+                      "primary": "Consigne PAC",
+                      "layout": "vertical",
+                      "tap_action": {
+                        "action": "more-info"
+                      },
+                      "secondary": "{% set m = states('climate.vtherm_salon') %}{% if m == 'cool' %}{{ state_attr('climate.pac_salon_pac_salon','target_temp_high') }} °C{% elif m == 'heat' %}{{ state_attr('climate.pac_salon_pac_salon','target_temp_low') }} °C{% else %}—{% endif %}",
+                      "icon": "{% set m = states('climate.vtherm_salon') %}{{ 'mdi:thermometer-chevron-down' if m=='cool' else 'mdi:thermometer-chevron-up' if m=='heat' else 'mdi:thermometer-off' }}",
+                      "icon_color": "{% set m = states('climate.vtherm_salon') %}{{ 'blue' if m=='cool' else 'orange' if m=='heat' else 'grey' }}"
+                    }
+                  ]
                 },
                 {
                   "type": "custom:mushroom-climate-card",
@@ -49,17 +83,18 @@
                 },
                 {
                   "type": "custom:mushroom-climate-card",
-                  "entity": "climate.pac_grande_chambre_pac_grande_chambre",
-                  "name": "Pac grande chambre",
+                  "entity": "climate.vtherm_grande_chambre",
+                  "name": "Grande chambre",
                   "icon": "mdi:bed-king",
-                  "fill_container": true,
+                  "hvac_modes": [
+                    "heat",
+                    "cool",
+                    "off"
+                  ],
                   "show_temperature_control": true,
-                  "collapsible_controls": true,
+                  "collapsible_controls": false,
                   "tap_action": {
                     "action": "more-info"
-                  },
-                  "hold_action": {
-                    "action": "toggle"
                   },
                   "grid_options": {
                     "columns": 12,
@@ -67,17 +102,51 @@
                   }
                 },
                 {
+                  "type": "horizontal-stack",
+                  "grid_options": {
+                    "columns": 12
+                  },
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "entity": "sensor.pac_haut_grande_chambre_local_temperature",
+                      "name": "Sonde PAC",
+                      "icon": "mdi:thermometer-lines",
+                      "layout": "vertical",
+                      "primary_info": "name",
+                      "secondary_info": "state",
+                      "tap_action": {
+                        "action": "more-info"
+                      }
+                    },
+                    {
+                      "type": "custom:mushroom-template-card",
+                      "entity": "climate.pac_grande_chambre_pac_grande_chambre",
+                      "primary": "Consigne PAC",
+                      "layout": "vertical",
+                      "tap_action": {
+                        "action": "more-info"
+                      },
+                      "secondary": "{% set m = states('climate.vtherm_grande_chambre') %}{% if m == 'cool' %}{{ state_attr('climate.pac_grande_chambre_pac_grande_chambre','target_temp_high') }} °C{% elif m == 'heat' %}{{ state_attr('climate.pac_grande_chambre_pac_grande_chambre','target_temp_low') }} °C{% else %}—{% endif %}",
+                      "icon": "{% set m = states('climate.vtherm_grande_chambre') %}{{ 'mdi:thermometer-chevron-down' if m=='cool' else 'mdi:thermometer-chevron-up' if m=='heat' else 'mdi:thermometer-off' }}",
+                      "icon_color": "{% set m = states('climate.vtherm_grande_chambre') %}{{ 'blue' if m=='cool' else 'orange' if m=='heat' else 'grey' }}"
+                    }
+                  ]
+                },
+                {
                   "type": "custom:mushroom-climate-card",
-                  "entity": "climate.pac_petite_chambre_pac_petite_chambre",
-                  "name": "Pac petite chambre",
+                  "entity": "climate.vtherm_petite_chambre",
+                  "name": "Petite chambre",
                   "icon": "mdi:bed",
+                  "hvac_modes": [
+                    "heat",
+                    "cool",
+                    "off"
+                  ],
                   "show_temperature_control": true,
-                  "collapsible_controls": true,
+                  "collapsible_controls": false,
                   "tap_action": {
                     "action": "more-info"
-                  },
-                  "hold_action": {
-                    "action": "toggle"
                   },
                   "grid_options": {
                     "columns": 12,
@@ -85,22 +154,88 @@
                   }
                 },
                 {
+                  "type": "horizontal-stack",
+                  "grid_options": {
+                    "columns": 12
+                  },
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "entity": "sensor.pac_haut_petite_chambre_local_temperature",
+                      "name": "Sonde PAC",
+                      "icon": "mdi:thermometer-lines",
+                      "layout": "vertical",
+                      "primary_info": "name",
+                      "secondary_info": "state",
+                      "tap_action": {
+                        "action": "more-info"
+                      }
+                    },
+                    {
+                      "type": "custom:mushroom-template-card",
+                      "entity": "climate.pac_petite_chambre_pac_petite_chambre",
+                      "primary": "Consigne PAC",
+                      "layout": "vertical",
+                      "tap_action": {
+                        "action": "more-info"
+                      },
+                      "secondary": "{% set m = states('climate.vtherm_petite_chambre') %}{% if m == 'cool' %}{{ state_attr('climate.pac_petite_chambre_pac_petite_chambre','target_temp_high') }} °C{% elif m == 'heat' %}{{ state_attr('climate.pac_petite_chambre_pac_petite_chambre','target_temp_low') }} °C{% else %}—{% endif %}",
+                      "icon": "{% set m = states('climate.vtherm_petite_chambre') %}{{ 'mdi:thermometer-chevron-down' if m=='cool' else 'mdi:thermometer-chevron-up' if m=='heat' else 'mdi:thermometer-off' }}",
+                      "icon_color": "{% set m = states('climate.vtherm_petite_chambre') %}{{ 'blue' if m=='cool' else 'orange' if m=='heat' else 'grey' }}"
+                    }
+                  ]
+                },
+                {
                   "type": "custom:mushroom-climate-card",
-                  "entity": "climate.pac_combles_pac_combles",
-                  "name": "Pac combles",
+                  "entity": "climate.vtherm_combles",
+                  "name": "Combles",
                   "icon": "mdi:home-roof",
+                  "hvac_modes": [
+                    "heat",
+                    "cool",
+                    "off"
+                  ],
                   "show_temperature_control": true,
-                  "collapsible_controls": true,
+                  "collapsible_controls": false,
                   "tap_action": {
                     "action": "more-info"
-                  },
-                  "hold_action": {
-                    "action": "toggle"
                   },
                   "grid_options": {
                     "columns": 12,
                     "rows": 2
                   }
+                },
+                {
+                  "type": "horizontal-stack",
+                  "grid_options": {
+                    "columns": 12
+                  },
+                  "cards": [
+                    {
+                      "type": "custom:mushroom-entity-card",
+                      "entity": "sensor.pac_haut_combles_local_temperature",
+                      "name": "Sonde PAC",
+                      "icon": "mdi:thermometer-lines",
+                      "layout": "vertical",
+                      "primary_info": "name",
+                      "secondary_info": "state",
+                      "tap_action": {
+                        "action": "more-info"
+                      }
+                    },
+                    {
+                      "type": "custom:mushroom-template-card",
+                      "entity": "climate.pac_combles_pac_combles",
+                      "primary": "Consigne PAC",
+                      "layout": "vertical",
+                      "tap_action": {
+                        "action": "more-info"
+                      },
+                      "secondary": "{% set m = states('climate.vtherm_combles') %}{% if m == 'cool' %}{{ state_attr('climate.pac_combles_pac_combles','target_temp_high') }} °C{% elif m == 'heat' %}{{ state_attr('climate.pac_combles_pac_combles','target_temp_low') }} °C{% else %}—{% endif %}",
+                      "icon": "{% set m = states('climate.vtherm_combles') %}{{ 'mdi:thermometer-chevron-down' if m=='cool' else 'mdi:thermometer-chevron-up' if m=='heat' else 'mdi:thermometer-off' }}",
+                      "icon_color": "{% set m = states('climate.vtherm_combles') %}{{ 'blue' if m=='cool' else 'orange' if m=='heat' else 'grey' }}"
+                    }
+                  ]
                 },
                 {
                   "type": "entities",
@@ -191,13 +326,26 @@
                   "graph": "line",
                   "type": "sensor",
                   "detail": 1,
-                  "entity": "sensor.sensor_haut_combles_temperature"
+                  "entity": "sensor.temperature_combles"
                 },
                 {
                   "graph": "line",
                   "type": "sensor",
                   "detail": 1,
                   "entity": "sensor.sensor_haut_combles_humidity"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.smart_switch_24040770198805510801c4e7ae01fd95_outlet",
+                  "features": [
+                    {
+                      "type": "toggle"
+                    }
+                  ],
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 2
+                  }
                 }
               ]
             }

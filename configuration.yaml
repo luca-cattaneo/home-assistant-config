@@ -126,3 +126,13 @@ mqtt:
         - fan_only
       max_temp: 30
       min_temp: 16
+# Versatile Thermostat — Expert self-regulation params (kp=ki=k_ext=0: pure
+# device-internal-temp offset correction, no PID — replicates the MQTT
+# correction layer behavior; see PAC-CLIMATE.md in ~/home-assistant)
+versatile_thermostat:
+  auto_regulation_expert:
+    kp: 0
+    ki: 0
+    k_ext: 0
+    offset_max: 5
+    accumulated_error_threshold: 10
